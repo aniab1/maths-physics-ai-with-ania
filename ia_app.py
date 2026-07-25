@@ -35,19 +35,40 @@ if prompt := st.chat_input("اكتب مسألتك الرياضية أو الفي
         client = genai.Client(api_key=api_key)
         
         with st.chat_message("assistant"):
-            with st.spinner("جاري تحليل المسألة واستنتاج الحل..."):
-                response = client.models.generate_content(
-                    model='gemini-2.0-flash',
-                    contents=prompt,
-                    config={
-                        'system_instruction': SYSTEM_INSTRUCTION,
-                        'temperature': 0.1
-                    }
-                )
+    with st.spinner("...جاري تحليل المسألة واستنتاج الحل"):
+        try:
+            # نحاول أولاً استخدام gemini-1.5-flash
+            response = client.models.generate_content(
+                model='gemini-1.5-flash',
+                contents=prompt,
+                config={
+                    'system_instruction': SYSTEM_INSTRUCTION,
+                    'temperature': 0.1
+                }
+            )
+            output_text = response.text
+            
+        except Exception as e:
+            # إذا ظهر خطأ نفاد الحصة (RESOURCE_EXHAUSTED) نحاول باستخدام gemini-2.0-flash
+            if "RESOURCE_EXHAUSTED" in str(e) or "429" in str(e):
+                try:
+                    response = client.models.generate_content(
+                        model='gemini-2.0-flash',
+                        contents=prompt,
+                        config={
+                            'system_instruction': SYSTEM_INSTRUCTION,
+                            'temperature': 0.1
+                        }
+                    )
+                    output_text = response.text
+                except Exception:
+                    output_text = "⏳ الحصة المجانية مشغولة حالياً، يرجى الانتظار بضع ثوانٍ والإعادة."
+            else:
+                output_text = f"حدث خطأ أثناء الاتصال بالنموذج: {e}"
 
-                output_text = response.text
-                st.markdown(output_text)
-                st.session_state.messages.append({"role": "assistant", "content": output_text})
+        # عرض النتيجة وحفظها في المحادثة
+        st.markdown(output_text)
+        st.session_state.messages.append({"role": "assistant", "content": output_text})
 
     except Exception as e:
         st.error(f"حدث خطأ أثناء الاتصال بالنموذج: {str(e)}") 
