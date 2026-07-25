@@ -28,30 +28,16 @@ if prompt := st.chat_input("اكتب مسألتك الرياضية أو الفي
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # تهيئة العميل وتوليد الإجابة
-    try:
+    # تهيئة العميل وتوليد الإجابةtry:
         # جلب المفتاح المباشر من Secrets أو بيئة العمل
         api_key = st.secrets.get("GEMINI_API_KEY") or os.environ.get("GEMINI_API_KEY")
         client = genai.Client(api_key=api_key)
-        
+
         with st.chat_message("assistant"):
-    with st.spinner("...جاري تحليل المسألة واستنتاج الحل"):
-        try:
-            response = client.models.generate_content(
-                model='gemini-1.5-flash',
-                contents=prompt,
-                config={
-                    'system_instruction': SYSTEM_INSTRUCTION,
-                    'temperature': 0.1
-                }
-            )
-            output_text = response.text
-            
-        except Exception as e:
-            if "RESOURCE_EXHAUSTED" in str(e) or "429" in str(e):
+            with st.spinner("...جاري تحليل المسألة واستنتاج الحل"):
                 try:
                     response = client.models.generate_content(
-                        model='gemini-2.0-flash',
+                        model='gemini-1.5-flash',
                         contents=prompt,
                         config={
                             'system_instruction': SYSTEM_INSTRUCTION,
@@ -59,10 +45,30 @@ if prompt := st.chat_input("اكتب مسألتك الرياضية أو الفي
                         }
                     )
                     output_text = response.text
+                    
+                except Exception as e:
+                    if "RESOURCE_EXHAUSTED" in str(e) or "429" in str(e):
+                        try:
+                            response = client.models.generate_content(
+                                model='gemini-2.0-flash',
+                                contents=prompt,
+                                config={
+                                    'system_instruction': SYSTEM_INSTRUCTION,
+                                    'temperature': 0.1
+                                }
+                            )
+                            output_text = response.text
                 except Exception:
                     output_text = "⏳ الحصة المجانية مشغولة حالياً، يرجى الانتظار بضع ثوانٍ والإعادة."
-            else:
-                output_text = f"حدث خطأ أثناء الاتصال بالنموذج: {e}"
 
         st.markdown(output_text)
         st.session_state.messages.append({"role": "assistant", "content": output_text})
+
+except Exception as e:
+    st.error(f"حدث خطأ في التهيئة: {str(e)}")
+                st.markdown(output_text)
+                st.session_state.messages.append({"role": "assistant", "content": output_text})
+
+    except Exception as e:
+        st.error(f"حدث خطأ في التهيئة: {str(e)}")
+    
