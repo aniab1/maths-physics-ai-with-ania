@@ -40,25 +40,7 @@ if prompt := st.chat_input("اكتب مسألتك الرياضية أو الفي
                         model='gemini-1.5-flash',
                         contents=prompt,
                         config={
-                            'system_instruction': SYSTEM_INSTRUCTION,
-                            'temperature': 0.1
-                        }
-                    )
-                    output_text = response.text
-                    
-                except Exception as e:
-                    if "RESOURCE_EXHAUSTED" in str(e) or "429" in str(e):
-                        try:
-                            response = client.models.generate_content(
-                                model='gemini-2.0-flash',
-                                contents=prompt,
-                                config={
-                                    'system_instruction': SYSTEM_INSTRUCTION,
-                                    'temperature': 0.1
-                                }
-                            )
-                            output_text = response.text
-                except Exception:
+                            'system_ins except Exception:
                     output_text = "⏳ الحصة المجانية مشغولة حالياً، يرجى الانتظار بضع ثوانٍ والإعادة."
 
         st.markdown(output_text)
@@ -69,6 +51,25 @@ except Exception as e:
                 st.markdown(output_text)
                 st.session_state.messages.append({"role": "assistant", "content": output_text})
 
-    except Exception as e:
-        st.error(f"حدث خطأ في التهيئة: {str(e)}")
-    
+   except Exception as e:
+            if "RESOURCE_EXHAUSTED" in str(e) or "429" in str(e):
+                try:
+                    response = client.models.generate_content(
+                        model='gemini-2.0-flash',
+                        contents=prompt,
+                        config={
+                            'system_instruction': SYSTEM_INSTRUCTION,
+                            'temperature': 0.1
+                        }
+                    )
+                    output_text = response.text
+                except Exception:
+                    output_text = "⏳ الحصة المجانية مشغولة حالياً، يرجى الانتظار بضع ثوانٍ والإعادة."
+            else:
+                output_text = f"حدث خطأ أثناء الاتصال بالنموذج: {e}"
+
+        st.markdown(output_text)
+        st.session_state.messages.append({"role": "assistant", "content": output_text})
+
+except Exception as e:
+    st.error(f"حدث خطأ في التهيئة: {str(e)}") 
