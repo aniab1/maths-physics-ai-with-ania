@@ -1,75 +1,68 @@
-import os
 import streamlit as st
 from google import genai
 
-# إعداد واجهة Streamlit
-st.set_page_config(page_title="مساعد الرياضيات والفيزياء", page_icon="🤖")
-st.title("🤖 مساعد الرياضيات والفيزياء")
+# إعداد الصفحة
+st.set_page_config(
+    page_title="مساعد الرياضيات والفيزياء", page_icon="🧮", layout="centered"
+)
 
-# تعليمات النظام الأساسية
-SYSTEM_INSTRUCTION = """
-أنت معلم خبير ومحترف في مادتي الرياضيات والفيزياء.
-قم بتحليل المسائل خطوة بخطوة، وتقديم شروحات دقيقة ومنطقية مع توضيح القوانين المستخدمة.
-"""
+st.header("مساعد الرياضيات والفيزياء 👨‍🏫")
 
-# تهيئة سجل المحادثة
+# التحقق من وجود مفتاح الـ API في أسرار Streamlit
+if "GEMINI_API_KEY" not in st.secrets:
+    st.error(
+        "الرجاء إضافة مفتاح GEMINI_API_KEY في قسم Secrets لوحة التحكم الخاصة بـ"
+        " Streamlit."
+    )
+    st.stop()
+
+# تهيئة عميل Google GenAI بالمفتاح السري
+client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
+
+# تهيئة الذاكرة المؤقتة للرسائل في المحادثة
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# عرض المحادثات السابقة
+# عرض المحادثات السابقة على الشاشة
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# استقبال مدخلات المستخدم
+# استقبال سؤال الطالب أو المستخدم
 if prompt := st.chat_input("اكتب مسألتك الرياضية أو الفيزياء هنا..."):
-    # عرض رسالة المستخدم
+    # تخزين وعرض رسالة المستخدم
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # تهيئة العميل وتوليد الإجابةtry:
-        # جلب المفتاح المباشر من Secrets أو بيئة العمل
-        api_key = st.secrets.get("GEMINI_API_KEY") or os.environ.get("GEMINI_API_KEY")
-        client = genai.Client(api_key=api_key)
-
+    # توليد الرد باستخدام نموذج gemini-1.5-flash
+    try:
         with st.chat_message("assistant"):
-            with st.spinner("...جاري تحليل المسألة واستنتاج الحل"):
-                try:
-                    response = client.models.generate_content(
-                        model='gemini-1.5-flash',
-                        contents=prompt,
-                        config={
-                            'system_ins except Exception:
-                    output_text = "⏳ الحصة المجانية مشغولة حالياً، يرجى الانتظار بضع ثوانٍ والإعادة."
+            with st.spinner("جاري التفكير وحل المسألة..."):
 
-        st.markdown(output_text)
-        st.session_state.messages.append({"role": "assistant", "content": output_text})
+                # إعطاء توجيه تخصصي للذكاء الاصطناعي ليركز على الرياضيات والفيزياء
+                system_instruction = (
+                    "أنت أستاذ خبير وودود في الرياضيات والفيزياء. "
+                    "ساعد المستخدم في حل المسائل وشرح القوانين والخطوات بالتفصيل "
+                    "وبأسلوب تعليمي مبسط وواضح."
+                )
 
-except Exception as e:
-    st.error(f"حدث خطأ في التهيئة: {str(e)}")
-                st.markdown(output_text)
-                st.session_state.messages.append({"role": "assistant", "content": output_text})
+                # دمج التعليمات مع المحادثة الحالية
+                full_prompt = f"{system_instruction}\n\nسؤال المستخدم: {prompt}"
 
-   except Exception as e:
-            if "RESOURCE_EXHAUSTED" in str(e) or "429" in str(e):
-                try:
-                    response = client.models.generate_content(
-                        model='gemini-2.0-flash',
-                        contents=prompt,
-                        config={
-                            'system_instruction': SYSTEM_INSTRUCTION,
-                            'temperature': 0.1
-                        }
-                    )
-                    output_text = response.text
-                except Exception:
-                    output_text = "⏳ الحصة المجانية مشغولة حالياً، يرجى الانتظار بضع ثوانٍ والإعادة."
-            else:
-                output_text = f"حدث خطأ أثناء الاتصال بالنموذج: {e}"
+                # الاتصال بالنموذج
+                response = client.models.generate_content(
+                    model="gemini-1.5-flash",
+                    contents=full_prompt,
+                )
 
-        st.markdown(output_text)
-        st.session_state.messages.append({"role": "assistant", "content": output_text})
+                bot_reply = response.text
+                st.markdown(bot_reply)
 
-except Exception as e:
-    st.error(f"حدث خطأ في التهيئة: {str(e)}") 
+        # حفظ رد المساعد في سجل المحادثة
+        st.session_state.messages.append(
+            {"role": "assistant", "content": bot_reply}
+        )
+
+    except Exception as e:
+        st.error(f"حدث خطأ أثناء الاتصال بالنموذج: {e}") 
