@@ -37,7 +37,6 @@ if prompt := st.chat_input("اكتب مسألتك الرياضية أو الفي
         with st.chat_message("assistant"):
     with st.spinner("...جاري تحليل المسألة واستنتاج الحل"):
         try:
-            # نحاول أولاً استخدام gemini-1.5-flash
             response = client.models.generate_content(
                 model='gemini-1.5-flash',
                 contents=prompt,
@@ -49,7 +48,6 @@ if prompt := st.chat_input("اكتب مسألتك الرياضية أو الفي
             output_text = response.text
             
         except Exception as e:
-            # إذا ظهر خطأ نفاد الحصة (RESOURCE_EXHAUSTED) نحاول باستخدام gemini-2.0-flash
             if "RESOURCE_EXHAUSTED" in str(e) or "429" in str(e):
                 try:
                     response = client.models.generate_content(
@@ -66,9 +64,5 @@ if prompt := st.chat_input("اكتب مسألتك الرياضية أو الفي
             else:
                 output_text = f"حدث خطأ أثناء الاتصال بالنموذج: {e}"
 
-        # عرض النتيجة وحفظها في المحادثة
         st.markdown(output_text)
         st.session_state.messages.append({"role": "assistant", "content": output_text})
-
-    except Exception as e:
-        st.error(f"حدث خطأ أثناء الاتصال بالنموذج: {str(e)}") 
