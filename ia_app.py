@@ -37,7 +37,7 @@ if prompt := st.chat_input("اكتب مسألتك الرياضية أو الفي
         with st.chat_message("assistant"):
             with st.spinner("جاري تحليل المسألة واستنتاج الحل..."):
                 response = client.models.generate_content(
-                    model='gemini-1.5-flash',
+                    model='models/gemini-1.5-flash',
                     contents=prompt,
                     config={
                         'system_instruction': SYSTEM_INSTRUCTION,
