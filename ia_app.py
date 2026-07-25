@@ -57,4 +57,4 @@ if prompt := st.chat_input("اكتب مسألتك الرياضية أو الفي
         )
 
     except Exception as e:
-        st.error(f"حدث خطأ أثناء الاتصال: {e}")
+        st.error(f"حدث خطأ أثنا
